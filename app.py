@@ -6,36 +6,30 @@ from PIL import Image
 import io
 import base64
 
-# 載入語意色彩設定
+# 載入語意色彩設定（使用 Lab 模式）
 with open("color_moods.json", "r", encoding="utf-8") as f:
     color_moods = json.load(f)
 
-# HSV 濾鏡
-def apply_hsv_filter(image, hue_shift, saturation_scale, brightness_scale):
+# Lab 濾鏡處理函式
+def apply_lab_filter(image, l_shift, a_shift, b_shift):
     img = np.array(image)
-    img = cv2.cvtColor(img, cv2.COLOR_RGB2HSV).astype(np.float32)
-    img[..., 0] = (img[..., 0] + hue_shift) % 180
-    img[..., 1] *= saturation_scale
-    img[..., 2] *= brightness_scale
-    img = np.clip(img, 0, 255).astype(np.uint8)
-    return cv2.cvtColor(img, cv2.COLOR_HSV2RGB)
+    img_lab = cv2.cvtColor(img, cv2.COLOR_RGB2LAB).astype(np.int16)
 
-# 對比度調整
-def adjust_contrast(image, contrast_scale):
-    return np.clip(128 + contrast_scale * (image - 128), 0, 255).astype(np.uint8)
+    # 拆開頻道
+    l, a, b = cv2.split(img_lab)
 
-# 色溫調整
-def adjust_color_temperature(img, warm_shift):
-    img = img.copy()
-    b, g, r = cv2.split(img)
+    # 加上色彩偏移量
+    l = np.clip(l + l_shift, 0, 255)
+    a = np.clip(a + a_shift, 0, 255)
+    b = np.clip(b + b_shift, 0, 255)
 
-    # 修正這裡的加減法
-    r = np.clip(r.astype(np.int16) + warm_shift, 0, 255).astype(np.uint8)
-    b = np.clip(b.astype(np.int16) - warm_shift, 0, 255).astype(np.uint8)
-
-    return cv2.merge((b, g, r))
+    # 合併並轉回 RGB
+    img_lab = cv2.merge((l, a, b)).astype(np.uint8)
+    filtered_img = cv2.cvtColor(img_lab, cv2.COLOR_LAB2RGB)
+    return filtered_img
 
 # 下載圖片的 HTML 連結
+
 def get_image_download_link(img_array, filename="filtered.png"):
     buffered = io.BytesIO()
     Image.fromarray(img_array).save(buffered, format="PNG")
@@ -61,31 +55,26 @@ if uploaded_file and mood:
 
     # 讀取預設值或使用者選項
     if st.session_state.reset:
-        hue_shift = cfg.get("hue", 0)
-        saturation_scale = cfg.get("saturation", 1.0)
-        brightness_scale = cfg.get("brightness", 1.0)
-        contrast_scale = cfg.get("contrast", 1.0)
-        warm_shift = cfg.get("warm_shift", 0)
+        l_shift = cfg.get("l_shift", 0)
+        a_shift = cfg.get("a_shift", 0)
+        b_shift = cfg.get("b_shift", 0)
         st.session_state.reset = False
     else:
-        hue_shift = st.slider("🎨 色調偏移 Hue", -90, 90, int(cfg.get("hue", 0)))
-        saturation_scale = st.slider("🌈 飽和度倍率", 0.0, 2.0, float(cfg.get("saturation", 1.0)), 0.1)
-        brightness_scale = st.slider("💡 亮度倍率", 0.0, 2.0, float(cfg.get("brightness", 1.0)), 0.1)
-        contrast_scale = st.slider("🧪 對比度倍率", 0.5, 2.0, float(cfg.get("contrast", 1.0)), 0.1)
-        warm_shift = st.slider("🔥 色溫偏移值", -50, 50, int(cfg.get("warm_shift", 0)))
+        l_shift = st.slider("✨ 明度 L* 偏移", -50, 50, int(cfg.get("l_shift", 0)))
+        a_shift = st.slider("🔴 a* 紅綠偏移", -50, 50, int(cfg.get("a_shift", 0)))
+        b_shift = st.slider("🔵 b* 藍黃偏移", -50, 50, int(cfg.get("b_shift", 0)))
 
-    # 濾鏡處理順序
-    filtered_img = apply_hsv_filter(image, hue_shift, saturation_scale, brightness_scale)
-    filtered_img = adjust_contrast(filtered_img, contrast_scale)
-    filtered_img = adjust_color_temperature(filtered_img, warm_shift)
+    # 濾鏡處理
+    filtered_img = apply_lab_filter(image, l_shift, a_shift, b_shift)
+    filtered_img = np.clip(filtered_img, 0, 255).astype(np.uint8)
 
     # 顯示前後對比圖
     st.subheader("🖼️ 處理結果對比")
     col1, col2 = st.columns(2)
     with col1:
-        st.image(image, caption="原圖", use_column_width=True)
+        st.image(image, caption="原圖", use_container_width=True)
     with col2:
-        st.image(filtered_img, caption="濾鏡後", use_column_width=True)
+        st.image(filtered_img, caption="濾鏡後", use_container_width=True)
 
     # 下載按鈕
     st.markdown("---")
