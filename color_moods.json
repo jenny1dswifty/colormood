@@ -1,0 +1,48 @@
+{
+  "夏天": {
+    "l_shift": 5,
+    "a_shift": 3,
+    "b_shift": 8
+  },
+  "冬天": {
+    "l_shift": -10,
+    "a_shift": -5,
+    "b_shift": -15
+  },
+  "快樂": {
+    "l_shift": 20,
+    "a_shift": 15,
+    "b_shift": 10
+  },
+  "悲傷": {
+    "l_shift": -15,
+    "a_shift": -10,
+    "b_shift": -20
+  },
+  "浪漫": {
+    "l_shift": 5,
+    "a_shift": 20,
+    "b_shift": 5
+  },
+  "清新": {
+    "l_shift": 15,
+    "a_shift": -10,
+    "b_shift": 10
+  },
+  "憂鬱": {
+    "l_shift": -20,
+    "a_shift": -20,
+    "b_shift": -10
+  },
+  "溫柔": {
+    "l_shift": 10,
+    "a_shift": 5,
+    "b_shift": 5
+  },
+  "神秘": {
+    "l_shift": -10,
+    "a_shift": 15,
+    "b_shift": -25
+  }
+}
+
