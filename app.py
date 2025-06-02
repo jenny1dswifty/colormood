@@ -43,7 +43,7 @@ def get_image_download_link(img_array, filename="filtered.png"):
     return f'<a href="data:file/png;base64,{b64}" download="{filename}">⬇️ 點我下載濾鏡圖片</a>'
 
 # --- Streamlit 開始 ---
-st.title("🎨 ColorMood 濾鏡生成器 ")
+st.title("🎨 ColorMood 最懂你的歌詞濾鏡 ")
 
 uploaded_file = st.file_uploader("請上傳一張圖片", type=["jpg", "png"])
 mood = st.selectbox("請選擇風格關鍵字（情境／情緒）", list(color_moods.keys()))
